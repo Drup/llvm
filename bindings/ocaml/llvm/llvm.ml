@@ -8,16 +8,6 @@
  *===----------------------------------------------------------------------===*)
 
 
-type llcontext
-type llmodule
-type lltype
-type llvalue
-type lluse
-type llbasicblock
-type llbuilder
-type llmemorybuffer
-type llmdkind
-
 module TypeKind = struct
   type t =
   | Void
@@ -145,74 +135,118 @@ module Fcmp = struct
   | True
 end
 
-module Opcode  = struct
-  type t =
-  | Invalid (* not an instruction *)
-  (* Terminator Instructions *)
-  | Ret
-  | Br
-  | Switch
-  | IndirectBr
-  | Invoke
-  | Invalid2
-  | Unreachable
-  (* Standard Binary Operators *)
-  | Add
-  | FAdd
-  | Sub
-  | FSub
-  | Mul
-  | FMul
-  | UDiv
-  | SDiv
-  | FDiv
-  | URem
-  | SRem
-  | FRem
-  (* Logical Operators *)
-  | Shl
-  | LShr
-  | AShr
-  | And
-  | Or
-  | Xor
-  (* Memory Operators *)
-  | Alloca
-  | Load
-  | Store
-  | GetElementPtr
-  (* Cast Operators *)
-  | Trunc
-  | ZExt
-  | SExt
-  | FPToUI
-  | FPToSI
-  | UIToFP
-  | SIToFP
-  | FPTrunc
-  | FPExt
-  | PtrToInt
-  | IntToPtr
-  | BitCast
-  (* Other Operators *)
-  | ICmp
-  | FCmp
-  | PHI
-  | Call
-  | Select
-  | UserOp1
-  | UserOp2
-  | VAArg
-  | ExtractElement
-  | InsertElement
-  | ShuffleVector
-  | ExtractValue
-  | InsertValue
-  | Fence
-  | AtomicCmpXchg
-  | AtomicRMW
-  | Resume
-  | LandingPad
+
+(** Instructions
+    see [llvm::Instruction]
+*)
+module Instruction  = struct
+
+  (** Terminators
+      see [llvm::TerminatorInstr]
+  *)
+  type terminator = [
+    | `Branch
+    | `IndirectBr
+    | `Invoke
+    | `Resume
+    | `Return
+    | `Switch
+    | `Unreachable
+  ]
+
+  (** Logical Instructions *)
+  type logical = [
+    | `Shl
+    | `LShr
+    | `AShr
+    | `And
+    | `Or
+    | `Xor
+  ]
+
+  (** Binary Instructions
+      see [llvm::BinaryOperator]
+  *)
+  type binary = [
+    | `Add
+    | `FAdd
+    | `Sub
+    | `FSub
+    | `Mul
+    | `FMul
+    | `UDiv
+    | `SDiv
+    | `FDiv
+    | `URem
+    | `SRem
+    | `FRem
+    | logical
+  ]
+
+  (** Cast Instructions
+      see [llvm::CastInst]
+  *)
+  type cast = [
+    | `Trunc
+    | `ZExt
+    | `SExt
+    | `FPToUI
+    | `FPToSI
+    | `UIToFP
+    | `SIToFP
+    | `FPTrunc
+    | `FPExt
+    | `PtrToInt
+    | `IntToPtr
+    | `BitCast
+  ]
+
+  (** Unary Instructions
+      see [llvm::UnaryInstruction]
+  *)
+  type unary = [
+    | `Alloca
+    | cast
+    | `ExtractValue
+    | `Load
+    | `VAArg
+  ]
+
+  (** Comparison Instructions
+      see [llvm::CmpInst]
+  *)
+  type cmp = [
+    | `ICmp
+    | `FCmp
+  ]
+
+  (** Call Instructions
+      see [llvm::CallInst]
+  *)
+  (* To complete *)
+  type call = [
+    | `Call
+  ]
+
+  type t = [
+    | `AtomicCmpXchg
+    | `AtomicRMW
+    | binary
+    | call
+    | cmp
+    | `ExtractElement
+    | `Fence
+    | `GetElementPtr
+    | `InsertElement
+    | `InsertValue
+    | `LandingPad
+    | `PHI
+    | `Select
+    | `ShuffleVector
+    | `Store
+    | terminator
+    | unary
+  ]
 end
 
 module LandingPadClauseTy = struct
@@ -257,31 +291,89 @@ module AtomicRMWBinOp = struct
   | UMin
 end
 
-module ValueKind = struct
-  type t =
-  | NullValue
-  | Argument
-  | BasicBlock
-  | InlineAsm
-  | MDNode
-  | MDString
-  | BlockAddress
-  | ConstantAggregateZero
-  | ConstantArray
-  | ConstantDataArray
-  | ConstantDataVector
-  | ConstantExpr
-  | ConstantFP
-  | ConstantInt
-  | ConstantPointerNull
-  | ConstantStruct
-  | ConstantVector
-  | Function
-  | GlobalAlias
-  | GlobalVariable
-  | UndefValue
-  | Instruction of Opcode.t
+(** Constants
+    see [llvm::Constant]
+*)
+module Constant = struct
+
+  type sequential = [
+    | `ConstantDataArray
+    | `ConstantDataVector
+  ]
+
+  type expr = [
+    | `ConstantExpr (* TODO *)
+  ]
+
+  type t = [
+    | `BlockAddress
+    | `ConstantAggregateZero
+    | `ConstantArray
+    | sequential
+    | expr
+    | `ConstantFP
+    | `ConstantInt
+    | `ConstantPointerNull
+    | `ConstantStruct
+    | `ConstantVector
+
+    | `Function
+    | `GlobalAlias
+    | `GlobalVariable
+
+    | `UndefValue
+  ]
 end
+
+type lltype
+
+type llmdkind
+
+module Operator = struct
+  type t = [
+    | `Operator (* TODO *)
+  ]
+end
+
+module User = struct
+  type t = [
+    | Operator.t
+    | Constant.t
+    | Instruction.t
+  ]
+end
+
+module BasicBlock = struct
+  type t = [
+    | `BasicBlock
+  ]
+end
+
+module Value = struct
+  type t = [
+    | `Argument
+    | BasicBlock.t
+    | `InlineAsm
+    | `MDNode
+    | `MDString
+    | User.t
+  ]
+end
+
+type 'a llvalue constraint 'a = [< Value.t ]
+
+type 'a lluser = ([< User.t ] as 'a) llvalue
+type llbasicblock = [ `BasicBlock ] llvalue
+type 'a llinstr = ([< Instruction.t] as 'a) llvalue
+type 'a llconstant = ([< Constant.t] as 'a) llvalue
+type llfunction = [ `Function] llconstant
+
+type lluse
+type llbuilder
+type llmemorybuffer
+
+type llcontext
+type llmodule
 
 exception IoError of string
 
@@ -393,21 +485,21 @@ external label_type : llcontext -> lltype = "llvm_label_type"
 external x86_mmx_type : llcontext -> lltype = "llvm_x86_mmx_type"
 external type_by_name : llmodule -> string -> lltype option = "llvm_type_by_name"
 
-external classify_value : llvalue -> ValueKind.t = "llvm_classify_value"
+external classify_value : 'a llvalue -> 'a = "llvm_classify_value"
 (*===-- Values ------------------------------------------------------------===*)
-external type_of : llvalue -> lltype = "llvm_type_of"
-external value_name : llvalue -> string = "llvm_value_name"
-external set_value_name : string -> llvalue -> unit = "llvm_set_value_name"
-external dump_value : llvalue -> unit = "llvm_dump_value"
-external string_of_llvalue : llvalue -> string = "llvm_string_of_llvalue"
-external replace_all_uses_with : llvalue -> llvalue -> unit
+external type_of : 'a llvalue -> lltype = "llvm_type_of"
+external value_name : 'a llvalue -> string = "llvm_value_name"
+external set_value_name : string -> 'a llvalue -> unit = "llvm_set_value_name"
+external dump_value : 'a llvalue -> unit = "llvm_dump_value"
+external string_of_llvalue : 'a llvalue -> string = "llvm_string_of_llvalue"
+external replace_all_uses_with : 'a llvalue -> 'a llvalue -> unit
                                = "llvm_replace_all_uses_with"
 
 (*--... Operations on uses .................................................--*)
-external use_begin : llvalue -> lluse option = "llvm_use_begin"
+external use_begin : 'a llvalue -> lluse option = "llvm_use_begin"
 external use_succ : lluse -> lluse option = "llvm_use_succ"
-external user : lluse -> llvalue = "llvm_user"
-external used_value : lluse -> llvalue = "llvm_used_value"
+external user : lluse -> 'a lluser = "llvm_user"
+external used_value : lluse -> 'a llvalue = "llvm_used_value"
 
 let iter_uses f v =
   let rec aux = function
@@ -436,143 +528,264 @@ let fold_right_uses f v init =
 
 
 (*--... Operations on users ................................................--*)
-external operand : llvalue -> int -> llvalue = "llvm_operand"
-external operand_use : llvalue -> int -> lluse = "llvm_operand_use"
-external set_operand : llvalue -> int -> llvalue -> unit = "llvm_set_operand"
-external num_operands : llvalue -> int = "llvm_num_operands"
+external operand : 'a lluser -> int -> 'a llvalue = "llvm_operand"
+external operand_use : 'a lluser -> int -> lluse = "llvm_operand_use"
+external set_operand : 'a lluser -> int -> 'a llvalue -> unit = "llvm_set_operand"
+external num_operands : 'a lluser -> int = "llvm_num_operands"
 
 (*--... Operations on constants of (mostly) any type .......................--*)
-external is_constant : llvalue -> bool = "llvm_is_constant"
-external const_null : lltype -> llvalue = "LLVMConstNull"
-external const_all_ones : (*int|vec*)lltype -> llvalue = "LLVMConstAllOnes"
-external const_pointer_null : lltype -> llvalue = "LLVMConstPointerNull"
-external undef : lltype -> llvalue = "LLVMGetUndef"
-external is_null : llvalue -> bool = "llvm_is_null"
-external is_undef : llvalue -> bool = "llvm_is_undef"
-external constexpr_opcode : llvalue -> Opcode.t = "llvm_constexpr_get_opcode"
+external is_constant : 'a llvalue -> [> Constant.t] llvalue option
+                     = "llvm_is_constant"
+external const_null : lltype -> [> Constant.t] llvalue = "LLVMConstNull"
+external const_all_ones : (*int|vec*)lltype -> [> Constant.t] llvalue = "LLVMConstAllOnes"
+external const_pointer_null : lltype -> [> Constant.t] llvalue = "LLVMConstPointerNull"
+external undef : lltype -> [> Constant.t] llvalue = "LLVMGetUndef"
+external is_null : [< Constant.t] llvalue -> bool = "llvm_is_null"
+external is_undef : [< Constant.t] llvalue -> bool = "llvm_is_undef"
+external constexpr_opcode : ([< Constant.t] as 'a) llvalue -> 'a = "llvm_constexpr_get_opcode"
 
 (*--... Operations on instructions .........................................--*)
-external has_metadata : llvalue -> bool = "llvm_has_metadata"
-external metadata : llvalue -> llmdkind -> llvalue option = "llvm_metadata"
-external set_metadata : llvalue -> llmdkind -> llvalue -> unit = "llvm_set_metadata"
-external clear_metadata : llvalue -> llmdkind -> unit = "llvm_clear_metadata"
+external has_metadata : 'a llinstr -> bool = "llvm_has_metadata"
+external metadata : 'a llinstr -> llmdkind -> [> `MDNode] llvalue option
+                  = "llvm_metadata"
+external set_metadata : 'a llinstr -> llmdkind -> [> `MDNode] llvalue -> unit
+                      = "llvm_set_metadata"
+external clear_metadata : 'a llinstr -> llmdkind -> unit = "llvm_clear_metadata"
 
 (*--... Operations on metadata .......,.....................................--*)
-external mdstring : llcontext -> string -> llvalue = "llvm_mdstring"
-external mdnode : llcontext -> llvalue array -> llvalue = "llvm_mdnode"
-external get_mdstring : llvalue -> string option = "llvm_get_mdstring"
-external get_named_metadata : llmodule -> string -> llvalue array
+external mdstring : llcontext -> string -> [> `MDString] llvalue = "llvm_mdstring"
+external mdnode : llcontext -> 'a llvalue array -> [> `MDNode] llvalue = "llvm_mdnode"
+external get_mdstring : [< `MDNode] llvalue -> string option = "llvm_get_mdstring"
+external get_named_metadata : llmodule -> string -> [> `MDNode] llvalue array
                             = "llvm_get_namedmd"
-external add_named_metadata_operand : llmodule -> string -> llvalue -> unit
+external add_named_metadata_operand : llmodule -> string -> [< `MDNode] llvalue -> unit
                                     = "llvm_append_namedmd"
 
 (*--... Operations on scalar constants .....................................--*)
-external const_int : lltype -> int -> llvalue = "llvm_const_int"
-external const_of_int64 : lltype -> Int64.t -> bool -> llvalue
+external const_int : lltype -> int -> [> `ConstantInt] llvalue = "llvm_const_int"
+external const_of_int64 : lltype -> Int64.t -> bool -> [> `ConstantInt] llvalue
                         = "llvm_const_of_int64"
-external int64_of_const : llvalue -> Int64.t option
+external int64_of_const : [< `ConstantInt] llvalue -> Int64.t option
                         = "llvm_int64_of_const"
-external const_int_of_string : lltype -> string -> int -> llvalue
+external const_int_of_string : lltype -> string -> int -> [> `ConstantInt] llvalue
                              = "llvm_const_int_of_string"
-external const_float : lltype -> float -> llvalue = "llvm_const_float"
-external float_of_const : llvalue -> float option
+external const_float : lltype -> float -> [> `ConstantFP] llvalue = "llvm_const_float"
+external float_of_const : [< `ConstantFP] llvalue -> float option
                         = "llvm_float_of_const"
-external const_float_of_string : lltype -> string -> llvalue
+external const_float_of_string : lltype -> string -> [> `ConstantFP] llvalue
                                = "llvm_const_float_of_string"
 
 (*--... Operations on composite constants ..................................--*)
-external const_string : llcontext -> string -> llvalue = "llvm_const_string"
-external const_stringz : llcontext -> string -> llvalue = "llvm_const_stringz"
-external const_array : lltype -> llvalue array -> llvalue = "llvm_const_array"
-external const_struct : llcontext -> llvalue array -> llvalue
+external const_string : llcontext -> string -> [> `ConstantArray] llvalue
+                      = "llvm_const_string"
+external const_stringz : llcontext -> string -> [> `ConstantArray] llvalue
+                       = "llvm_const_stringz"
+external const_array : lltype -> 'a llconstant array -> [> `ConstantArray] llvalue
+                     = "llvm_const_array"
+external const_struct : llcontext -> 'a llconstant array -> [> `ConstantStruct] llvalue
                       = "llvm_const_struct"
-external const_named_struct : lltype -> llvalue array -> llvalue
-                      = "llvm_const_named_struct"
-external const_packed_struct : llcontext -> llvalue array -> llvalue
-                             = "llvm_const_packed_struct"
-external const_vector : llvalue array -> llvalue = "llvm_const_vector"
-external string_of_const : llvalue -> string option = "llvm_string_of_const"
-external const_element : llvalue -> int -> llvalue = "llvm_const_element"
+external const_named_struct
+  : lltype -> 'a llconstant array -> [> `ConstantStruct] llvalue
+  = "llvm_const_named_struct"
+external const_packed_struct
+  : llcontext -> 'a llconstant array -> [> `ConstantStruct] llvalue
+  = "llvm_const_packed_struct"
+external const_vector : 'a llconstant array -> [> `ConstantVector] llvalue
+                      = "llvm_const_vector"
+external string_of_const : 'a llconstant -> string option = "llvm_string_of_const"
+external const_element
+  : [< Constant.sequential ] llconstant -> int -> 'a llconstant
+  = "llvm_const_element"
 
 (*--... Constant expressions ...............................................--*)
-external align_of : lltype -> llvalue = "LLVMAlignOf"
-external size_of : lltype -> llvalue = "LLVMSizeOf"
-external const_neg : llvalue -> llvalue = "LLVMConstNeg"
-external const_nsw_neg : llvalue -> llvalue = "LLVMConstNSWNeg"
-external const_nuw_neg : llvalue -> llvalue = "LLVMConstNUWNeg"
-external const_fneg : llvalue -> llvalue = "LLVMConstFNeg"
-external const_not : llvalue -> llvalue = "LLVMConstNot"
-external const_add : llvalue -> llvalue -> llvalue = "LLVMConstAdd"
-external const_nsw_add : llvalue -> llvalue -> llvalue = "LLVMConstNSWAdd"
-external const_nuw_add : llvalue -> llvalue -> llvalue = "LLVMConstNUWAdd"
-external const_fadd : llvalue -> llvalue -> llvalue = "LLVMConstFAdd"
-external const_sub : llvalue -> llvalue -> llvalue = "LLVMConstSub"
-external const_nsw_sub : llvalue -> llvalue -> llvalue = "LLVMConstNSWSub"
-external const_nuw_sub : llvalue -> llvalue -> llvalue = "LLVMConstNUWSub"
-external const_fsub : llvalue -> llvalue -> llvalue = "LLVMConstFSub"
-external const_mul : llvalue -> llvalue -> llvalue = "LLVMConstMul"
-external const_nsw_mul : llvalue -> llvalue -> llvalue = "LLVMConstNSWMul"
-external const_nuw_mul : llvalue -> llvalue -> llvalue = "LLVMConstNUWMul"
-external const_fmul : llvalue -> llvalue -> llvalue = "LLVMConstFMul"
-external const_udiv : llvalue -> llvalue -> llvalue = "LLVMConstUDiv"
-external const_sdiv : llvalue -> llvalue -> llvalue = "LLVMConstSDiv"
-external const_exact_sdiv : llvalue -> llvalue -> llvalue = "LLVMConstExactSDiv"
-external const_fdiv : llvalue -> llvalue -> llvalue = "LLVMConstFDiv"
-external const_urem : llvalue -> llvalue -> llvalue = "LLVMConstURem"
-external const_srem : llvalue -> llvalue -> llvalue = "LLVMConstSRem"
-external const_frem : llvalue -> llvalue -> llvalue = "LLVMConstFRem"
-external const_and : llvalue -> llvalue -> llvalue = "LLVMConstAnd"
-external const_or : llvalue -> llvalue -> llvalue = "LLVMConstOr"
-external const_xor : llvalue -> llvalue -> llvalue = "LLVMConstXor"
-external const_icmp : Icmp.t -> llvalue -> llvalue -> llvalue
-                    = "llvm_const_icmp"
-external const_fcmp : Fcmp.t -> llvalue -> llvalue -> llvalue
-                    = "llvm_const_fcmp"
-external const_shl : llvalue -> llvalue -> llvalue = "LLVMConstShl"
-external const_lshr : llvalue -> llvalue -> llvalue = "LLVMConstLShr"
-external const_ashr : llvalue -> llvalue -> llvalue = "LLVMConstAShr"
-external const_gep : llvalue -> llvalue array -> llvalue = "llvm_const_gep"
-external const_in_bounds_gep : llvalue -> llvalue array -> llvalue
-                            = "llvm_const_in_bounds_gep"
-external const_trunc : llvalue -> lltype -> llvalue = "LLVMConstTrunc"
-external const_sext : llvalue -> lltype -> llvalue = "LLVMConstSExt"
-external const_zext : llvalue -> lltype -> llvalue = "LLVMConstZExt"
-external const_fptrunc : llvalue -> lltype -> llvalue = "LLVMConstFPTrunc"
-external const_fpext : llvalue -> lltype -> llvalue = "LLVMConstFPExt"
-external const_uitofp : llvalue -> lltype -> llvalue = "LLVMConstUIToFP"
-external const_sitofp : llvalue -> lltype -> llvalue = "LLVMConstSIToFP"
-external const_fptoui : llvalue -> lltype -> llvalue = "LLVMConstFPToUI"
-external const_fptosi : llvalue -> lltype -> llvalue = "LLVMConstFPToSI"
-external const_ptrtoint : llvalue -> lltype -> llvalue = "LLVMConstPtrToInt"
-external const_inttoptr : llvalue -> lltype -> llvalue = "LLVMConstIntToPtr"
-external const_bitcast : llvalue -> lltype -> llvalue = "LLVMConstBitCast"
-external const_zext_or_bitcast : llvalue -> lltype -> llvalue
-                             = "LLVMConstZExtOrBitCast"
-external const_sext_or_bitcast : llvalue -> lltype -> llvalue
-                             = "LLVMConstSExtOrBitCast"
-external const_trunc_or_bitcast : llvalue -> lltype -> llvalue
-                              = "LLVMConstTruncOrBitCast"
-external const_pointercast : llvalue -> lltype -> llvalue
-                           = "LLVMConstPointerCast"
-external const_intcast : llvalue -> lltype -> is_signed:bool -> llvalue
-                       = "llvm_const_intcast"
-external const_fpcast : llvalue -> lltype -> llvalue = "LLVMConstFPCast"
-external const_select : llvalue -> llvalue -> llvalue -> llvalue
-                      = "LLVMConstSelect"
-external const_extractelement : llvalue -> llvalue -> llvalue
-                              = "LLVMConstExtractElement"
-external const_insertelement : llvalue -> llvalue -> llvalue -> llvalue
-                             = "LLVMConstInsertElement"
-external const_shufflevector : llvalue -> llvalue -> llvalue -> llvalue
-                             = "LLVMConstShuffleVector"
-external const_extractvalue : llvalue -> int array -> llvalue
-                            = "llvm_const_extractvalue"
-external const_insertvalue : llvalue -> llvalue -> int array -> llvalue
-                           = "llvm_const_insertvalue"
-external const_inline_asm : lltype -> string -> string -> bool -> bool ->
-                            llvalue
-                          = "llvm_const_inline_asm"
-external block_address : llvalue -> llbasicblock -> llvalue = "LLVMBlockAddress"
+external align_of : lltype -> [> Constant.expr] llconstant = "LLVMAlignOf"
+external size_of : lltype -> [> Constant.expr] llconstant = "LLVMSizeOf"
+external const_neg
+  : [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstNeg"
+external const_nsw_neg
+  : [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstNSWNeg"
+external const_nuw_neg
+  : [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstNUWNeg"
+external const_fneg
+  : [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstFNeg"
+external const_not
+  : [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstNot"
+external const_add
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstAdd"
+external const_nsw_add
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstNSWAdd"
+external const_nuw_add
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstNUWAdd"
+external const_fadd
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstFAdd"
+external const_sub
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstSub"
+external const_nsw_sub
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstNSWSub"
+external const_nuw_sub
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstNUWSub"
+external const_fsub
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstFSub"
+external const_mul
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstMul"
+external const_nsw_mul
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstNSWMul"
+external const_nuw_mul
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstNUWMul"
+external const_fmul
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstFMul"
+external const_udiv
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstUDiv"
+external const_sdiv
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstSDiv"
+external const_exact_sdiv
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstExactSDiv"
+external const_fdiv
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstFDiv"
+external const_urem
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstURem"
+external const_srem
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstSRem"
+external const_frem
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstFRem"
+external const_and
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstAnd"
+external const_or
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstOr"
+external const_xor
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstXor"
+external const_icmp
+  : Icmp.t -> [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "llvm_const_icmp"
+external const_fcmp
+  : Fcmp.t -> [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "llvm_const_fcmp"
+external const_shl
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstShl"
+external const_lshr
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstLShr"
+external const_ashr
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstAShr"
+external const_gep
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant array -> [> Constant.expr] llconstant
+  = "llvm_const_gep"
+external const_in_bounds_gep
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant array -> [> Constant.expr] llconstant
+  = "llvm_const_in_bounds_gep"
+external const_trunc
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstTrunc"
+external const_sext
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstSExt"
+external const_zext
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstZExt"
+external const_fptrunc
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstFPTrunc"
+external const_fpext
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstFPExt"
+external const_uitofp
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstUIToFP"
+external const_sitofp
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstSIToFP"
+external const_fptoui
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstFPToUI"
+external const_fptosi
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstFPToSI"
+external const_ptrtoint
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstPtrToInt"
+external const_inttoptr
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstIntToPtr"
+external const_bitcast
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstBitCast"
+external const_zext_or_bitcast
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstZExtOrBitCast"
+external const_sext_or_bitcast
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstSExtOrBitCast"
+external const_trunc_or_bitcast
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstTruncOrBitCast"
+external const_pointercast
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstPointerCast"
+external const_intcast
+  : [< Constant.expr] llconstant -> lltype -> is_signed:bool
+  -> [> Constant.expr] llconstant
+  = "llvm_const_intcast"
+external const_fpcast
+  : [< Constant.expr] llconstant -> lltype -> [> Constant.expr] llconstant
+  = "LLVMConstFPCast"
+external const_select
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant
+    -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstSelect"
+external const_extractelement
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstExtractElement"
+external const_insertelement
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstInsertElement"
+external const_shufflevector
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> [> Constant.expr] llconstant
+  = "LLVMConstShuffleVector"
+external const_extractvalue
+  : [< Constant.expr] llconstant -> int array -> [> Constant.expr] llconstant
+  = "llvm_const_extractvalue"
+external const_insertvalue
+  : [< Constant.expr] llconstant -> [< Constant.expr] llconstant -> int array
+    -> [> Constant.expr] llconstant
+  = "llvm_const_insertvalue"
+
+external const_inline_asm
+  : lltype -> string -> string -> side_effects:bool -> align:bool
+  -> [> `InlineAsm] llvalue
+  = "llvm_const_inline_asm"
+
+external block_address
+  : llfunction -> llbasicblock -> [> `BlockAddress] llconstant
+  = "LLVMBlockAddress"
 
 (*--... Operations on global variables, functions, and aliases (globals) ...--*)
 external global_parent : llvalue -> llmodule = "LLVMGetGlobalParent"
