@@ -1232,7 +1232,7 @@ val const_insertvalue : llvalue -> llvalue -> int array -> llvalue
 val const_inline_asm : lltype -> string -> string -> bool -> bool -> llvalue
 
 (** [block_address f bb] returns the address of the basic block [bb] in the
-    function [f]. See the method [llvm::BasicBlock::get]. *)
+    function [f]. See the method [llvm::BlockAddress::get]. *)
 val block_address : llvalue -> llbasicblock -> llvalue
 
 
