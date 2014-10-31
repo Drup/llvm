@@ -21,6 +21,47 @@
 #OS X specific files.
 .DS_store
 
+
+#==============================================================================#
+# File created by configure
+#==============================================================================#
+Makefile.config
+bindings/ocaml/llvm/META.llvm
+config.log
+config.status
+docs/doxygen.cfg
+include/llvm/Config/AsmParsers.def
+include/llvm/Config/AsmPrinters.def
+include/llvm/Config/Disassemblers.def
+include/llvm/Config/Targets.def
+include/llvm/Config/config.h
+include/llvm/Config/llvm-config.h
+include/llvm/Support/DataTypes.h
+llvm.spec
+
+
+#==============================================================================#
+# Builds
+#==============================================================================#
+LLVMBuild.cmake
+Makefile.llvmbuild
+cmake/modules/LLVMBuildExports.cmake
+cmake/modules/LLVMConfig.cmake
+cmake/modules/LLVMConfigVersion.cmake
+cmake/modules/LLVMExports.cmake
+include/llvm/IR/.dir
+include/llvm/IR/Intrinsics.gen
+tools/llvm-config/LibraryDependencies.inc
+tools/llvm-config/temp.sed
+tools/lli/ChildTarget/.dir
+tools/lli/ChildTarget/RemoteTarget.d
+tools/lli/ChildTarget/RemoteTarget.o
+lib/Target/X86/*.inc
+unittests/Option/Opts.inc
+bindings/ocaml/backends/Makefile.X86
+
+**/Debug+Asserts
+
 #==============================================================================#
 # Explicit files to ignore (only matches one).
 #==============================================================================#
