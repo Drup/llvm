@@ -1,0 +1,38 @@
+OASISFormat: 0.4
+Name:        OKamleidoscope
+Version:     0.1
+Synopsis:    Kaleidoscope tutorial in OCaml.
+Authors:     Gabriel Radanne <drupyog@zoho.com>
+License:     MIT
+Plugins:     META (0.3), DevFiles (0.3)
+
+BuildTools: ocamlbuild
+
+Library kaleidoscope
+  Path: src
+  InternalModules: Parser
+  Modules: Ast, Syntax, Codegen, Toplevel, Toy
+  CompiledObject: best
+  BuildDepends:
+    llvm, llvm.scalar_opts, llvm.executionengine, llvm.target, llvm.analysis,
+    sedlex, menhirLib, ppx_deriving.show
+
+Executable kaleidoscope
+  Path: src
+  MainIs: toy.ml
+  CompiledObject: best
+  BuildDepends: kaleidoscope
+
+
+AlphaFeatures: ocamlbuild_more_args
+Document kaleidoscope
+  Install: false
+  Type: ocamlbuild (0.3)
+  BuildTools: ocamldoc
+
+  Title: API reference for Kaleidoscope
+  XOCamlbuildPath: .
+  XOCamlbuildExtraArgs:
+    "-docflags '-colorize-code -short-functors -charset utf-8'"
+  XOCamlbuildLibraries:
+    kaleidoscope

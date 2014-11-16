@@ -1,0 +1,12 @@
+S src/*
+B _build/*
+
+PKG llvm
+PKG llvm.scalar_opts
+PKG llvm.executionengine
+PKG llvm.target
+PKG llvm.analysis
+
+PKG sedlex
+
+FLG -w -40
